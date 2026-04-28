@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  reinforcetrade:
+    build: .
+    container_name: reinforcetrade
+    environment:
+      - DATABASE_URL=sqlite:///data/reinforcetrade.db
+      - LOG_LEVEL=INFO
+      - EXCHANGE_API_KEY=${EXCHANGE_API_KEY}
+      - EXCHANGE_SECRET=${EXCHANGE_SECRET}
+      - EXCHANGE_NAME=${EXCHANGE_NAME:-binance}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+      - ./models:/app/models
+    command: python trading_bot.py
+    restart: unless-stopped
+    networks:
+      - reinforcetrade-network
+
+  # Optional: Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: reinforcetrade-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - reinforcetrade-network
+
+  # Optional: Jupyter notebook for analysis
+  jupyter:
+    build: .
+    container_name: reinforcetrade-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./notebooks:/app/notebooks
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+    networks:
+      - reinforcetrade-network
+
+volumes:
+  redis-data:
+
+networks:
+  reinforcetrade-network:
+    driver: bridge
