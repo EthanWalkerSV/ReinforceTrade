@@ -12,3 +12,4 @@ tensorflow
 pydantic
 loguru
 aiohttp
+websockets
